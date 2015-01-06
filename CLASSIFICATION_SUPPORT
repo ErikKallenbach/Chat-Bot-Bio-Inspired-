@@ -1,0 +1,269 @@
+import sys
+import operator
+import math
+import time
+import numpy
+import random
+#from numpy import *
+
+from TALK_support import *
+from TALK_support2 import *
+
+class CLASSIFICATION_SUPPORT():
+    ascii_matrix_columns=10  # DONT CHANGE. its the length of binary input. i have written a code in SENTENCE () class to set it up.its not flexible
+                                #HERE [SENTENCE.ascii_matrix_columns] IS USED FOR NO. OF COLUMNS IN ASCII.
+    sdr_output_columns=80 # number of columns in the output
+    percentage_of_on_bits_sdr=10
+    on_bits_sdr=math.floor((percentage_of_on_bits_sdr) * (sdr_output_columns/100))
+    no_of_connections_per_Neuron=5 #MAXIMUN LENGTH OF SEQUENCE THAT CAN BE CLASSIFIED CORRECTLY. BECAUSE ONLY AFTER THESE MANY COUNTS WILL THE RESPONSE GO IN OUTPUT
+                                    #IF INPUT IS 4 SEQ LONG, [THEN no_of_connections_per_Neuron-4] IS ALL WASTED.IT STAYS IN VALUE MATRIX UNTOUCHED.
+    filename='car_data.txt' # TEXT FILE THAT HAS DATA
+    no_of_lines_toRead=800 # NUMBER OF LINES TO READ FROM THE TEXT FILE
+    
+    def Input_to_Sdr(self,connection_matrix_1,in_strng):#TAKES in_strng READ INPUT
+        #my_str = input("Enter the sequence please \n ")
+        my_str=in_strng
+        sentence1=SENTENCE()  # object of class
+        sent1=sentence1.RemovePunctuations(my_str) # also makes lower case
+        ascii_matrix=numpy.zeros((len(sent1),CLASSIFICATION_SUPPORT.ascii_matrix_columns))
+        for j in range(0,len(sent1)):
+            ascii_matrix[j,:]=sentence1.Converting_char_2binary(sent1[j]) # HERE [SENTENCE.ascii_matrix_columns] IS USED FOR NO OF COLUMNS IN ASCII.
+                                                                            #IT CANT BE CHANGED BY CHANING CLASSIFICATION_SUPPORT.ascii_matrix_columns
+          
+        self.sdr_matrix_1 = numpy.zeros((len(sent1),CLASSIFICATION_SUPPORT.sdr_output_columns))
+        for row in range(0,len(sent1)):
+            self.sdr_matrix_1[row,:]=sum((connection_matrix_1*(ascii_matrix[row,:])).T) #multiplication is weird in python 3.3
+            self.sdr_matrix_1[row,:]=SENTENCE.top_bit(self.sdr_matrix_1[row,:],CLASSIFICATION_SUPPORT.on_bits_sdr)
+
+
+
+    def Connection_Mat_2():#THIS NEW CM2 STORES INDEXES OF CONNECTIONS. iNDEX OF CM2 ROW (0,1,2,3..) = NEURON CONNECTIONS NUMBER (1ST CONN, 2ND CONNEC,3RD,4TH..)
+                            # VALUE OF CM2[8,1,11,5] = ACTUAL VALUE MAT INDEX.
+                            #CM[[2,0,0,0,4,0,0,1,0,0,3],[4,0,0,3,0,2,0,0,0,0,1]] --  CM2[[8,1,11,5],[11,6,4,1] ..] THESE IS REAL EXAMPLE 
+                            #refer notebook for more !!
+        cm2= numpy.zeros((CLASSIFICATION_SUPPORT.sdr_output_columns,CLASSIFICATION_SUPPORT.no_of_connections_per_Neuron))
+        for row in range(0,CLASSIFICATION_SUPPORT.sdr_output_columns):
+            cm2[row,:]=random.sample(range(CLASSIFICATION_SUPPORT.sdr_output_columns), CLASSIFICATION_SUPPORT.no_of_connections_per_Neuron)#random indexes [99, 36, 19, 82, 61, 10, 69, 33, 98, 37]
+        return(cm2)
+    
+    '''
+    def Connection_Mat_2(): # THIS CM IS TAKING TOO MUCH TIME FOR PROPAGATING INPUTS
+        
+        cm2= numpy.zeros((CLASSIFICATION_SUPPORT.sdr_output_columns,CLASSIFICATION_SUPPORT.sdr_output_columns))
+        for row in range(0,CLASSIFICATION_SUPPORT.sdr_output_columns):
+            indx=random.sample(range(CLASSIFICATION_SUPPORT.sdr_output_columns), CLASSIFICATION_SUPPORT.no_of_connections_per_Neuron) #random indexes [99, 36, 19, 82, 61, 10, 69, 33, 98, 37]
+            random_connections=random.sample(range(1,CLASSIFICATION_SUPPORT.no_of_connections_per_Neuron+1), CLASSIFICATION_SUPPORT.no_of_connections_per_Neuron)#[4, 1, 5, 7, 10, 0, 3, 8, 9, 2]
+                                                            #it will actually give 1-cnec/neurn random numbers list
+            for col in range (0,CLASSIFICATION_SUPPORT.no_of_connections_per_Neuron):
+                cm2[row,indx[col]]=random_connections[col]
+        
+        return(cm2)
+    '''
+
+    def Value_Mat(self,connection_matrix_2): #connections are added and progressed further
+        output=numpy.zeros((CLASSIFICATION_SUPPORT.sdr_output_columns))# FINAL OUTPUT
+        vm= numpy.zeros((CLASSIFICATION_SUPPORT.sdr_output_columns,CLASSIFICATION_SUPPORT.sdr_output_columns))
+        
+        for row in range(0,self.sdr_matrix_1.shape[0]): #OUTPUT CHANGES FOR EVERY INPUT.WE WILL ONLY CONSIDER THE FINAL ONE FOR CLASSIFICATION
+            vm=vm+self.sdr_matrix_1[row,:] #input added
+            #print('PROGRESSING INPUTS')
+            (output,vm)=CLASSIFICATION_SUPPORT.Progressing_Inputs(connection_matrix_2,vm)
+            #print('PROGRESSING INPUTS DONE!!')
+        self.output=SENTENCE.top_bit(output,CLASSIFICATION_SUPPORT.on_bits_sdr) 
+        
+
+    def Progressing_Inputs(cm,vm):#NEW EFFICIENT SHIFTING OF connections !!!
+        vm2=vm*0#  TEMPORARY VALUE MATRIX
+        output=numpy.zeros((CLASSIFICATION_SUPPORT.sdr_output_columns))# FINAL OUTPUT
+        for row in range (0,CLASSIFICATION_SUPPORT.sdr_output_columns): #NUMBER OF NEURONS
+            value=0
+            for col in range (0,CLASSIFICATION_SUPPORT.no_of_connections_per_Neuron): # NO OF CONNECTIONS
+                vm2[row,cm[row,col]]=value
+                value=vm[row,cm[row,col]]
+            output[row]=value
+        return(output,vm2)
+
+    """
+    def Progressing_Inputs(cm,vm):#shifts inputs based on connections !!! TAKING LONG TIME !!!
+        vm2=vm*0#  TEMPORARY VALUE MATRIX
+        output=numpy.zeros((CLASSIFICATION_SUPPORT.sdr_output_columns))# FINAL OUTPUT
+        
+        for row in range (0,CLASSIFICATION_SUPPORT.sdr_output_columns):
+            for col in range (0,CLASSIFICATION_SUPPORT.sdr_output_columns):
+                connection_value=cm[row,col]
+                if connection_value == CLASSIFICATION_SUPPORT.no_of_connections_per_Neuron:
+                    output[row]=vm[row,col]
+                else:
+                    for col2 in range (0,CLASSIFICATION_SUPPORT.sdr_output_columns):
+                        if cm[row,col2]== connection_value+1:
+                            vm2[row,col2] = vm[row,col]
+        
+        return(output,vm2)
+    """
+
+
+    def Read_txt():#READS "no_of_lines_toRead" FROM TEXT FILE AND CONVERTS IT INTO AN INPUT WORD('ajcnt')MATRIX AND CLASS NUMBER(1,2,3,4) VECTOR
+        
+        output_str_matrix=[]
+        output_classification_vec=numpy.zeros((CLASSIFICATION_SUPPORT.no_of_lines_toRead))# CLASS WHERE INPUT BELONGS
+        fin=open(CLASSIFICATION_SUPPORT.filename,'r')
+        for i in range (0,CLASSIFICATION_SUPPORT.no_of_lines_toRead):
+            Output_str=''
+            l1=fin.readline()
+            l2=l1.split(',',7)#BECAUSE WE HAVE 7 PARAMETERS HERE and SEPERATED BY ','
+            
+            if l2[0]=='vhigh':
+                Output_str=Output_str+'a'
+            elif l2[0]=='high':
+                Output_str=Output_str+'b'
+            elif l2[0]=='med':
+                Output_str=Output_str+'c'
+            elif l2[0]=='low':
+                Output_str=Output_str+'d'
+
+            if l2[1]=='vhigh':
+                Output_str=Output_str+'e'
+            elif l2[1]=='high':
+                Output_str=Output_str+'f'
+            elif l2[1]=='med':
+                Output_str=Output_str+'g'
+            elif l2[1]=='low':
+                Output_str=Output_str+'h'
+
+            if l2[2]=='2':
+                Output_str=Output_str+'i'
+            elif l2[2]=='3':
+                Output_str=Output_str+'j'
+            elif l2[2]=='4':
+                Output_str=Output_str+'k'
+            elif l2[2]=='5more':
+                Output_str=Output_str+'l'
+
+            if l2[3]=='2':
+                Output_str=Output_str+'m'
+            elif l2[3]=='4':
+                Output_str=Output_str+'n'
+            elif l2[3]=='more':
+                Output_str=Output_str+'o'
+
+            if l2[4]=='small':
+                Output_str=Output_str+'p'
+            elif l2[4]=='med':
+                Output_str=Output_str+'q'
+            elif l2[4]=='big':
+                Output_str=Output_str+'r'
+
+            if l2[5]=='low':
+                Output_str=Output_str+'s'
+            elif l2[5]=='med':
+                Output_str=Output_str+'t'
+            elif l2[5]=='high':
+                Output_str=Output_str+'u'
+
+            if l2[6]=='unacc\n':
+                output_classification_vec[i]=1
+            elif l2[6]=='acc\n':
+                output_classification_vec[i]=2
+                
+            elif l2[6]=='good\n':
+                output_classification_vec[i]=3
+            elif l2[6]=='vgood\n':
+                output_classification_vec[i]=4
+
+            
+
+            output_str_matrix.append(Output_str)
+        return(output_str_matrix,output_classification_vec)
+
+    def Extract_Indexes_ofOnes (self): #GIVES INDEXES OF ALL ONES FOR ONE PARTICULAR VECTOR
+        indx=numpy.zeros((CLASSIFICATION_SUPPORT.on_bits_sdr))
+        count=0
+        for i in range (0,CLASSIFICATION_SUPPORT.sdr_output_columns):
+            if self.output[i]==1:
+                indx[count]=i
+                count=count+1
+        return(indx)
+
+
+    def Classifying(l1,l2,l3,l4,classification_vec,index):
+        
+        if classification_vec==1:
+            l1.append(index)
+            
+        elif classification_vec==2:
+            #print('found class 2')
+            l2.append(index)
+            
+        elif classification_vec==3:
+            l3.append(index)
+            
+        elif classification_vec==4:
+            l4.append(index)
+
+    def Predicting_Class(l1,l2,l3,l4,index):# PREDICTING WHAT CLASS THE INPUT BELONGS TO MORE APPROPRIATLY
+        l_max_true=numpy.zeros((4)) # NUMBER OF CLASSIFICATIONS = 4.MAXIMUM TRUES IN EACH CLASS. CLASS 1= INDEX 0
+                                        #CLASS 2= INDEX 1.. SO ON
+        
+        for i in range (0,len(l1)):
+            k=l1[i]==index
+            
+            count=0
+            for j in range (0,len(index)): #COUNTING NUMBER OF TRUE'SS
+                if k[j]==True:
+                    count=count+1
+            if l_max_true[0]<count: # IF THIS COUNT OF TRUES IS MORE THEN PREVIOUS ONE.. STORE IT 
+                l_max_true[0]=count
+                k2=k
+                l1_final=l1[i]
+        print ('final TRUE for l1\n', k2)
+        print ('l1_final',l1_final)
+                
+
+
+        for i in range (0,len(l2)):
+            k=l2[i]==index
+            
+            
+            count=0
+            for j in range (0,len(index)): #COUNTING NUMBER OF TRUE'SS
+                if k[j]==True:
+                    count=count+1
+            if l_max_true[1]<count: # IF THIS COUNT OF TRUES IS MORE THEN PREVIOUS ONE.. STORE IT 
+                l_max_true[1]=count
+                k2=k
+                l2_final=l2[i]
+        print ('final TRUE for l2\n', k2)
+        print ('l2_final',l2_final)
+                
+
+        for i in range (0,len(l3)):
+            k=l3[i]==index
+            count=0
+            for j in range (0,len(index)): #COUNTING NUMBER OF TRUE'SS
+                if k[j]==True:
+                    count=count+1
+            if l_max_true[2]<count: # IF THIS COUNT OF TRUES IS MORE THEN PREVIOUS ONE.. STORE IT 
+                l_max_true[2]=count
+
+
+        for i in range (0,len(l4)):
+            k=l4[i]==index
+            count=0
+            for j in range (0,len(index)): #COUNTING NUMBER OF TRUE'SS
+                if k[j]==True:
+                    count=count+1
+            if l_max_true[3]<count: # IF THIS COUNT OF TRUES IS MORE THEN PREVIOUS ONE.. STORE IT 
+                l_max_true[3]=count
+
+        return(l_max_true)
+
+    def CM33(cm33,sdr3_1,sdr3_2): #LEARNING CONNECTIONS !!
+        #print(sdr3_2.shape[0],'\n its a 1D vector preety sure\n')
+            
+        for i in range(0,sdr3_2.shape[0]):
+            if sdr3_2[i]==1:
+                cm33[i,:]=cm33[i,:]+(sdr3_1)
+
+        cm33=SENTENCE2.thresholding_of_matrix_2(cm33,1) #thresholding_of_matrix_2(cm33,SENTENCE2.threshold)-- THRESHOLD  HERE IS 1 BECAUSE WE WANT IT TO LEARN PATTERNS THE MOMENT IT SEES ONE.nO NEED OF REPEATED LEARNING!
+            
+        return(cm33)
