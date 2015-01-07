@@ -8,10 +8,10 @@ import time
 class SENTENCE():
     punctuations = '''!()-[]{};:'"\,<>./?@#$%^&*_~'''
     memory_matrix_rows=10
-    memory_matrix_columns=100
+    memory_matrix_columns=200
     ascii_matrix_columns=10  # its the length of binary input. i have written a code to set it up. so dont change this number, its not flexible
-    percentage_of_on_bits_sdr=10
-    threshold=1  #connection strength threshold
+    percentage_of_on_bits_sdr=5
+    threshold=2  #connection strength threshold
     
 
     
@@ -99,6 +99,7 @@ class SENTENCE():
                                 #temp.flat[j]=temp.flat[j]+0.2
                                 temp.flat[j]=SENTENCE.threshold *1
                                 synapse_matrix[i,:,:]=temp
+        #print(' strengthened synapse mat in talk 1\n' )
         return (synapse_matrix)
 
     def Next_prediction(history_matrix,synapse_matrix):
