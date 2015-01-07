@@ -8,7 +8,7 @@ import time
 class SENTENCE2():
     punctuations = '''!()-[]{};:'"\,<>./?@#$%^&*_~'''
     memory_matrix_rows=10
-    memory_matrix_columns=100 #INCREASE THREHOLD WITH NUMBER OF COLUMNS. HIGH THRESH ARE GOOD FOR SEMANTIC SIMILARITY IN NEXT PREDICTIONS
+    memory_matrix_columns=200 #INCREASE THREHOLD WITH NUMBER OF COLUMNS. HIGH THRESH ARE GOOD FOR SEMANTIC SIMILARITY IN NEXT PREDICTIONS
     ascii_matrix_columns=10  # its the length of binary input. i have written a code to set it up. so dont change this number, its not flexible
     onbit_ascii=2 #number of ON bits in every row of ascii matrix
     percentage_of_on_bits_sdr=8
@@ -167,8 +167,8 @@ class SENTENCE2():
                         max_pred=numpy.argmax(prediction_matrix[1:,col]*pred_available[:,col])+1 #IT GIVES MAX PREDICTED VALUE IN THAT COLUMN TO MAKE IT 1
                         self.memory_matrix_1[wrd,max_pred,col]=1
                         new_memory_matrix[max_pred,col]=1
-                print (new_memory_matrix)
-                print('above is new_memory_matrix 1 pattern ')
+                #print (new_memory_matrix)
+                #print('above is new_memory_matrix 1 pattern ')
                 pred_available=pred_available-new_memory_matrix[1:,:]# USED BITS ARE MADE 0 IN PRED_AVAILABLE. SO THEY ARE NO LONGER AVAILABLE
                        
                 synapse_matrix_one=SENTENCE2.strengthening_synapse(synapse_matrix_one,history_matrix,new_memory_matrix)
@@ -553,7 +553,7 @@ class SENTENCE2():
                 if sum(self.ascii_mat_down[row,:])==2:
                     output.append(SENTENCE2.Converting_binary_2char(self.ascii_mat_down[row,:]))
         elif len(self.ascii_mat_down.shape)==3:# many words 1 SENTENCE2
-            print('in CHARACTERS_OUTPUT function ascii mat is 3D\n')
+            #print('in CHARACTERS_OUTPUT function ascii mat is 3D\n')
             for third_dim in range(0,self.ascii_mat_down.shape[0]):
                 for row in range(0,self.ascii_mat_down.shape[1]):
                     if sum(self.ascii_mat_down[third_dim,row,:])==2:
@@ -567,17 +567,17 @@ class SENTENCE2():
     def Converting_binary_2char(bin_vect): #mke sure bin_vect is a vector with 1st dimension as number of columns
         m=-1
         
-        print(bin_vect,'\n this is the input ascii row to be converted into character\n')
+        #print(bin_vect,'\n this is the input ascii row to be converted into character\n')
         for bit in range(0,SENTENCE2.ascii_matrix_columns):
             if bin_vect[bit]==1:
                 if m<0: # m not set. so this 1 bit is the first bit
                     m=bit*1
-                    print('setting m=',m)
+                    #print('setting m=',m)
                 else:
                     n=bit*1
-                    print('\nsetting n=',n,' \n now breaking the for loop')
+                    #print('\nsetting n=',n,' \n now breaking the for loop')
                     break
-        print(bin_vect,'\n this is the input ascii row to be converted into character\n','m= ',m,'\n n= ',n )
+        #print(bin_vect,'\n this is the input ascii row to be converted into character\n','m= ',m,'\n n= ',n )
         if m==0:
             decimal=97+n-1
         elif m==1:
@@ -762,7 +762,7 @@ class SENTENCE2():
                         cm_added[row,:,:]=cm_added[row,:,:]+(cm_zero[i,:,:])
                         #print('connections added')
         elif len(self.sdr2_down.shape)==1:
-            print(' problem 1 solved\n' )
+            #print(' problem 1 solved\n' )
             for i in range(0,SENTENCE2.memory_matrix_columns):
                     if self.sdr2_down[i]==1:
                         cm_added[:,:]=cm_added[:,:]+(cm_zero[i,:,:])
@@ -775,7 +775,7 @@ class SENTENCE2():
     def Predicted_or_not(mm2_pred,mm2):
         for i in range(0,mm2.shape[0]*mm2.shape[1]):
             if mm2.flat[i]==1 and mm2_pred.flat[i]!=10:
-                print(' \nnot predicted completly')
+                #print(' \nnot predicted completly')
                 break
             if mm2_pred.flat[i]==10 and mm2.flat[i]!=1:
                 input('\nECTRA predicted')
@@ -827,11 +827,11 @@ class SENTENCE2():
         self.on_bit_sdr3=SENTENCE2.NUMBER_OF_ON_BITS(self.sdr_matrix_3) # NUMBER OF ON BITS ARE FIXED IN SDR3 AS IN EVERY SDR, BUT STILL M CALCULATING IT HERE AGAIN :P
         #JUST INCASE IF THERE IS ERROR.. WHICH CANNOT HAPPEN COZ I M GOING TO CHOOSE TOP BITS FROM PREDICTED SDR3 LOL
         for col in range(0,SENTENCE2.memory_matrix_columns):
-            if mm2_pred[0,col]>math.floor((self.on_bit_sdr3*SENTENCE2.threshold)*0.99): # (on_bit_sdr3*SENTENCE2.threshold) - is max bit strength.. uska 80% liya
+            if mm2_pred[0,col]>math.floor((self.on_bit_sdr3*SENTENCE2.threshold)*0.9): # (on_bit_sdr3*SENTENCE2.threshold) - is max bit strength.. uska 80% liya
                 final_inhibited=final_inhibited+(inhibition_mat[col]*mm2_pred[0,col])
 
         #on_bit_sdr3=SENTENCE2.NUMBER_OF_ON_BITS(self.sdr_matrix_3) #GIVES NUMBER OF ON BITS IN SDR 3
-        mm1strow_pred_tresh=SENTENCE2.thresholding_of_matrix(mm2_pred[0,:],(self.on_bit_sdr3*SENTENCE2.threshold)*0.99) #only above thresholds are kept.others 0
+        mm1strow_pred_tresh=SENTENCE2.thresholding_of_matrix(mm2_pred[0,:],(self.on_bit_sdr3*SENTENCE2.threshold)*0.9) #only above thresholds are kept.others 0
         
         #making it 1 or 0
                 #OLD PATCH
@@ -852,7 +852,7 @@ class SENTENCE2():
         
         #final_inhibited=mm1_pred[:,0,:]*0 # its for 3D memory matrix 1st row
         final_inhibited=numpy.zeros((mm1_pred.shape[0],SENTENCE2.memory_matrix_columns))
-        print(final_inhibited.shape,' final_inhibited shape in begining of imhibited_mm1_1st row\n')
+        #print(final_inhibited.shape,' final_inhibited shape in begining of imhibited_mm1_1st row\n')
         for third_dim in range(0,mm1_pred.shape[0]):
             
             #print((mm1_pred.shape))
@@ -970,9 +970,9 @@ class SENTENCE2():
         a=numpy.zeros((SENTENCE2.memory_matrix_rows-1,SENTENCE2.memory_matrix_columns))
         final_inhibited=a*0
         zero_1strow=numpy.zeros((1,SENTENCE2.memory_matrix_columns))
-        self.sdr1_down=numpy.zeros((self.sdr_matrix_2.shape[0],SENTENCE2.max_rows_sdr1_down,SENTENCE2.memory_matrix_columns))
+        self.sdr1_down=numpy.zeros((self.sdr2_down.shape[0],SENTENCE2.max_rows_sdr1_down,SENTENCE2.memory_matrix_columns))
         #self.sdr_matrix_2 is a 2D mat.fuck off. so shape[0] will atleast be 1
-        print(self.sdr1_down.shape,'self.sdr1_down shape after its initialization\n')
+        #print(self.sdr1_down.shape,'self.sdr1_down shape after its initialization\n')
         max_count_sdr1down_rows=1
 
         if len(self.sdr2_down.shape)==1:
@@ -1000,9 +1000,9 @@ class SENTENCE2():
             sdr1_down=self.sdr1_1strow_down[third_dim,:]*1 #1st row of that dim memory mat is stored. its bloody 1D vector as of now.
             
             while True:
-                print(' in while loop of INHIBITED_MM1')
+                #print(' in while loop of INHIBITED_MM1')
                 if sum(sum(mm1_tomakezero))==0:
-                    print('\n mm1_tomakezero == 0.. so all predicted paterns have been stored in SDR matrix. BREAK NOW\n')
+                    #print('\n mm1_tomakezero == 0.. so all predicted paterns have been stored in SDR matrix. BREAK NOW\n')
                     break
                 #print(mm1_pred_tresh)
                 #print('above is mm1_pred_tresh \n')
@@ -1019,19 +1019,19 @@ class SENTENCE2():
                 
                     
                 if (SENTENCE2.NUMBER_OF_ON_BITS(pred_mat_tresh))<SENTENCE2.min_num_ofsdr_bits:
-                    print(mm1_pred_tresh)
-                    print('above is mm1_pred_tresh \n')
-                    print(prediction_matrix.astype(int),'\n above is prediction_matrix\n')
-                    print(pred_mat_tresh.astype(int),'\n above is pred_mat_tresh')
-                    print(mult.astype(int))
-                    print(' above is multiplication.. mm1 pred thresh * pred_mat_tresh\n')
+                    #print(mm1_pred_tresh)
+                    #print('above is mm1_pred_tresh \n')
+                    #print(prediction_matrix.astype(int),'\n above is prediction_matrix\n')
+                    #print(pred_mat_tresh.astype(int),'\n above is pred_mat_tresh')
+                    #print(mult.astype(int))
+                    #print(' above is multiplication.. mm1 pred thresh * pred_mat_tresh\n')
                     #input(' pred_mat_tresh doesnt have enough ON bits .. so BREAK\n above is all DETAILS U require\n')
                     break
                 #print(pred_mat_tresh)
                 #print(' above is pred_mat_tresh \n')
                 
                 if sum(sum(mult))==0:
-                    print(' mul is zero .. so break \n')
+                    #print(' mul is zero .. so break \n')
                     break
                 
                 #inhibition
@@ -1082,7 +1082,7 @@ class SENTENCE2():
                 #print(final_inhibited)
                 #input('final_inhibited it has 1 or 0 \n')
                 if sum(sum(final_inhibited))<SENTENCE2.min_num_ofsdr_bits: # FINAL INHIBITED IS FOR PARTICULAR PREDICTION MATRIX
-                    print(' num of on bits=',sum(sum(final_inhibited)),'\nnum of ON bits in SDR1 is less.. so BREAK\n')
+                    #print(' num of on bits=',sum(sum(final_inhibited)),'\nnum of ON bits in SDR1 is less.. so BREAK\n')
                     #print(mm1_pred_tresh)
                     #print('above is mm1_pred_tresh \n')
                     #print(final_inhibited)
@@ -1114,33 +1114,33 @@ class SENTENCE2():
             
             if len(sdr1_down.shape)>1: # if there are more than 1 rows.. store each row of sdr1_down in each row of self.sdr1_down
                 for roww in range(0,sdr1_down.shape[0]):
-                    print(self.sdr1_down.shape)
+                    #print(self.sdr1_down.shape)
                     #print(' SELF.sdr1_down shape.. its the final SDR1 matrix\n')
-                    print(sdr1_down.shape)
+                    #print(sdr1_down.shape)
                     #input(' sdr1_down shape. its temporary 2 dimension matrix\n')
                     #print(sdr1_down)
                     #print(' above is sdr1_down. its to be stored in self.sdr1_down which is 3D \n' )
                     self.sdr1_down[third_dim,roww,:]=sdr1_down[roww,:]*1
             elif len(sdr1_down.shape)==1: # if it just has 1 row.. then directly store it in its first row
                 try:
-                    print('shape of self.sdr1_down = ',self.sdr1_down.shape,'\n shape of sdr1_down= ',sdr1_down.shape )
+                    #print('shape of self.sdr1_down = ',self.sdr1_down.shape,'\n shape of sdr1_down= ',sdr1_down.shape )
                     #input('this line had an error previously\n give keyboard interrupt if u want to see mm1_pred_thresh and predictions\n')
                     self.sdr1_down[third_dim,0,:]=sdr1_down*1
                 except:
-                    print(mm1_pred_tresh)
-                    print('above is mm1_pred_tresh \n')
-                    print(prediction_matrix,'\n above is prediction_matrix \n')
-                    
-                    print(final_inhibited)
-                    print('final_inhibited it has 1 or 0. (final_inhibited *mult)>0 =1 \n')
+                    #print(mm1_pred_tresh)
+                    #print('above is mm1_pred_tresh \n')
+                    #print(prediction_matrix,'\n above is prediction_matrix \n')
+                    print('')
+                    #print(final_inhibited)
+                    #print('final_inhibited it has 1 or 0. (final_inhibited *mult)>0 =1 \n')
                     
                     
 
             #CALCULATING THE MAX WORD LENGTH PREDICTED. SO THAT IS THE MAX ROWS OF SDR1
             if sdr1_down.shape[0]> max_count_sdr1down_rows and len(sdr1_down.shape)>1:
                 max_count_sdr1down_rows=sdr1_down.shape[0]*1
-                print(max_count_sdr1down_rows)
-                print(' max_count_sdr1down_rows \n' )
+                #print(max_count_sdr1down_rows)
+                #print(' max_count_sdr1down_rows \n' )
 
         self.sdr1_down=self.sdr1_down[:,0:max_count_sdr1down_rows,:]
 
@@ -1173,8 +1173,8 @@ class SENTENCE2():
                 mat[j,j]=0
         return(mat)
     
-    def CM33(cm33,sdr3_1,sdr3_2): #LEARNING CONNECTIONS !!
-        print(sdr3_2.shape[0],'\n its a 1D vector preety sure\n')
+    def CM33(cm33,sdr3_1,sdr3_2):
+        #print(sdr3_2.shape[0],'\n its a 1D vector preety sure\n')
             
         for i in range(0,sdr3_2.shape[0]):
             if sdr3_2[i]==1:
